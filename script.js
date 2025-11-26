@@ -58,75 +58,87 @@ window.addEventListener('scroll', () => {
 });
 
 // ==========================================
-// Newsletter Form Handler
+// Newsletter Form Handler with Web3Forms
 // ==========================================
 const newsletterForm = document.getElementById('newsletterForm');
 
 if (newsletterForm) {
-    newsletterForm.addEventListener('submit', (e) => {
+    newsletterForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = newsletterForm.querySelector('input[type="email"]').value;
 
-        // Aquí puedes integrar con un servicio de newsletter como Mailchimp, ConvertKit, etc.
-        // Por ahora, mostramos un mensaje de confirmación
+        const submitButton = newsletterForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.textContent;
 
-        alert(`¡Gracias por suscribirte! Te enviaremos tips y promociones a ${email}`);
-        newsletterForm.reset();
+        // Cambiar estado del botón
+        submitButton.textContent = 'Enviando...';
+        submitButton.disabled = true;
 
-        // Ejemplo de integración con un servicio:
-        // fetch('https://tu-servicio-newsletter.com/api/subscribe', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ email })
-        // })
-        // .then(response => response.json())
-        // .then(data => {
-        //     alert('¡Gracias por suscribirte!');
-        //     newsletterForm.reset();
-        // })
-        // .catch(error => {
-        //     alert('Hubo un error. Por favor intenta de nuevo.');
-        // });
+        const formData = new FormData(newsletterForm);
+
+        try {
+            const response = await fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification('¡Gracias por suscribirte! Revisa tu email.', 'success');
+                newsletterForm.reset();
+            } else {
+                showNotification('Hubo un error. Por favor intenta de nuevo.', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error de conexión. Intenta nuevamente.', 'error');
+        } finally {
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
+        }
     });
 }
 
 // ==========================================
-// Contact Form Handler
+// Contact Form Handler with Web3Forms
 // ==========================================
 const contactForm = document.getElementById('contactForm');
 
 if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
+    contactForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const formData = {
-            name: contactForm.querySelector('input[type="text"]').value,
-            email: contactForm.querySelector('input[type="email"]').value,
-            service: contactForm.querySelector('select').value,
-            message: contactForm.querySelector('textarea').value
-        };
+        const submitButton = contactForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.textContent;
 
-        // Aquí puedes integrar con un servicio de email como FormSpree, EmailJS, etc.
-        // O enviar directamente a tu backend
+        // Cambiar estado del botón
+        submitButton.textContent = 'Enviando...';
+        submitButton.disabled = true;
 
-        alert(`¡Gracias ${formData.name}! Hemos recibido tu mensaje y te contactaremos pronto.`);
-        contactForm.reset();
+        const formData = new FormData(contactForm);
 
-        // Ejemplo de integración con FormSpree:
-        // fetch('https://formspree.io/f/tu-form-id', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(formData)
-        // })
-        // .then(response => {
-        //     if (response.ok) {
-        //         alert('¡Mensaje enviado con éxito!');
-        //         contactForm.reset();
-        //     }
-        // })
-        // .catch(error => {
-        //     alert('Hubo un error. Por favor intenta de nuevo.');
-        // });
+        try {
+            const response = await fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const name = contactForm.querySelector('input[type="text"]').value;
+                showNotification(`¡Gracias ${name}! Hemos recibido tu mensaje y te contactaremos pronto.`, 'success');
+                contactForm.reset();
+            } else {
+                showNotification('Hubo un error. Por favor intenta de nuevo.', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error de conexión. Intenta nuevamente.', 'error');
+        } finally {
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
+        }
     });
 }
 
@@ -251,6 +263,71 @@ document.querySelectorAll('.social-link, .footer-social a').forEach(link => {
         trackEvent('Social', 'Click', platform);
     });
 });
+
+// ==========================================
+// Notification System
+// ==========================================
+function showNotification(message, type = 'info') {
+    // Crear el elemento de notificación
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+
+    // Estilos inline para la notificación
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : '#3498db'};
+        color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+        max-width: 400px;
+        font-family: var(--font-secondary);
+        font-size: 0.95rem;
+    `;
+
+    // Agregar al body
+    document.body.appendChild(notification);
+
+    // Remover después de 5 segundos
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 5000);
+}
+
+// Agregar animaciones CSS dinámicamente
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 
 // ==========================================
 // Console Message
