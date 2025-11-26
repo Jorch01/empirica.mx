@@ -1,0 +1,12 @@
+# robots.txt para Empírica Legal Lab
+User-agent: *
+Allow: /
+Disallow: /assets/
+Disallow: *.css
+Disallow: *.js
+
+# Sitemap
+Sitemap: https://empirica.mx/sitemap.xml
+
+# Crawl-delay (opcional - ajusta según necesites)
+Crawl-delay: 10
